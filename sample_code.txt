@@ -1,0 +1,32 @@
+# 代码高亮测试
+
+下面是 Python：
+
+```python
+import os
+from pathlib import Path
+
+def hello(name: str):
+    if name:
+        print(f"hello {name}")
+    return Path.cwd()
+```
+
+下面是 JS：
+
+```js
+const user = { name: "xqcherry", age: 18 };
+async function main() {
+  console.log(user?.name ?? "anonymous");
+}
+```
+
+下面是 C++：
+
+```cpp
+#include <iostream>
+int main() {
+    std::cout << "hello" << std::endl;
+    return 0;
+}
+```

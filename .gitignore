@@ -1,0 +1,38 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging / build output
+build/
+dist/
+*.egg-info/
+*.egg
+
+# PyInstaller generated files
+*.manifest
+*.toc
+*.pkg
+*.pyz
+
+# Local test / coverage output
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor / OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local logs and temp files
+*.log
+*.tmp
+*.bak
