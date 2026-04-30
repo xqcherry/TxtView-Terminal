@@ -11,6 +11,7 @@
 - 支持中文等宽显示宽度处理
 - 支持 Markdown 标题、引用、列表的简单着色
 - 支持 fenced code block，并在安装 `Pygments` 后提供代码高亮
+- 内置多种主题，可用 `t` 键即时切换
 - 使用终端备用屏幕显示，退出后恢复原终端内容
 
 ## 运行
@@ -35,6 +36,29 @@ python txtview.py
 python txtview.py sample_code.txt
 ```
 
+## 主题
+
+可在启动时指定主题：
+
+```bash
+python txtview.py --theme Dracula sample_code.txt
+```
+
+也可以列出全部主题：
+
+```bash
+python txtview.py --list-themes
+```
+
+当前内置主题搬自 Codex CLI 内置语法主题名，包括 `ansi`、`base16`、`Catppuccin Frappe`、`Catppuccin Latte`、`Catppuccin Macchiato`、`Catppuccin Mocha`、`Coldark-Cold`、`Coldark-Dark`、`DarkNeon`、`Dracula`、`GitHub`、`gruvbox-dark`、`gruvbox-light`、`InspiredGitHub`、`1337`、`Monokai Extended`、`Nord`、`OneHalfDark`、`OneHalfLight`、`Solarized (dark)`、`Solarized (light)` 等。
+
+还可以通过环境变量设置默认主题：
+
+```powershell
+$env:TXTVIEW_THEME="Nord"
+python txtview.py sample_code.txt
+```
+
 ## 快捷键
 
 | 按键 | 功能 |
@@ -42,6 +66,7 @@ python txtview.py sample_code.txt
 | `↑` / `↓` | 上下滚动 |
 | `PageUp` / `PageDown` | 翻页 |
 | `Home` / `End` | 跳到开头/结尾 |
+| `t` | 切换主题 |
 | `q` / `Esc` | 退出 |
 
 ## 打包 EXE

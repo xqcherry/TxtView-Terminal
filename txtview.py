@@ -28,14 +28,48 @@ else:
 
 
 RESET = "\x1b[0m"
-CYAN = "\x1b[38;5;81m"
-BLUE = "\x1b[38;5;75m"
-MUTED = "\x1b[38;5;244m"
-FG = "\x1b[38;5;252m"
-DIM = "\x1b[38;5;240m"
-STATUS = "\x1b[48;5;236m\x1b[38;5;250m"
-TITLE = "\x1b[1m\x1b[38;5;117m"
-CODE_BG = "\x1b[48;5;235m"
+
+
+def fg(color: int) -> str:
+    return f"\x1b[38;5;{color}m"
+
+
+def bg(color: int) -> str:
+    return f"\x1b[48;5;{color}m"
+
+
+THEMES = [
+    {"name": "ansi", "fg": 252, "muted": 244, "border": 75, "accent": 81, "title": 117, "status_bg": 236, "status_fg": 250, "code_bg": 235, "pygments": "monokai"},
+    {"name": "base16", "fg": 252, "muted": 245, "border": 109, "accent": 180, "title": 116, "status_bg": 237, "status_fg": 251, "code_bg": 236, "pygments": "native"},
+    {"name": "base16-eighties.dark", "fg": 252, "muted": 245, "border": 139, "accent": 215, "title": 174, "status_bg": 235, "status_fg": 251, "code_bg": 234, "pygments": "native"},
+    {"name": "base16-mocha.dark", "fg": 252, "muted": 244, "border": 137, "accent": 180, "title": 109, "status_bg": 235, "status_fg": 251, "code_bg": 234, "pygments": "native"},
+    {"name": "base16-ocean.dark", "fg": 252, "muted": 245, "border": 67, "accent": 110, "title": 152, "status_bg": 236, "status_fg": 251, "code_bg": 235, "pygments": "native"},
+    {"name": "base16-ocean.light", "fg": 239, "muted": 246, "border": 67, "accent": 31, "title": 25, "status_bg": 250, "status_fg": 238, "code_bg": 254, "pygments": "default"},
+    {"name": "base16-256", "fg": 252, "muted": 244, "border": 73, "accent": 214, "title": 150, "status_bg": 236, "status_fg": 251, "code_bg": 235, "pygments": "native"},
+    {"name": "Catppuccin Frappe", "fg": 252, "muted": 146, "border": 111, "accent": 182, "title": 153, "status_bg": 60, "status_fg": 253, "code_bg": 236, "pygments": "dracula"},
+    {"name": "Catppuccin Latte", "fg": 238, "muted": 103, "border": 104, "accent": 176, "title": 67, "status_bg": 254, "status_fg": 238, "code_bg": 255, "pygments": "default"},
+    {"name": "Catppuccin Macchiato", "fg": 252, "muted": 146, "border": 110, "accent": 183, "title": 153, "status_bg": 60, "status_fg": 253, "code_bg": 235, "pygments": "dracula"},
+    {"name": "Catppuccin Mocha", "fg": 252, "muted": 146, "border": 111, "accent": 183, "title": 153, "status_bg": 59, "status_fg": 253, "code_bg": 234, "pygments": "dracula"},
+    {"name": "Coldark-Cold", "fg": 238, "muted": 244, "border": 31, "accent": 37, "title": 25, "status_bg": 254, "status_fg": 238, "code_bg": 255, "pygments": "default"},
+    {"name": "Coldark-Dark", "fg": 252, "muted": 244, "border": 38, "accent": 80, "title": 110, "status_bg": 236, "status_fg": 251, "code_bg": 235, "pygments": "native"},
+    {"name": "DarkNeon", "fg": 252, "muted": 246, "border": 48, "accent": 201, "title": 51, "status_bg": 235, "status_fg": 51, "code_bg": 234, "pygments": "monokai"},
+    {"name": "Dracula", "fg": 253, "muted": 247, "border": 141, "accent": 212, "title": 117, "status_bg": 236, "status_fg": 253, "code_bg": 235, "pygments": "dracula"},
+    {"name": "GitHub", "fg": 238, "muted": 244, "border": 32, "accent": 35, "title": 25, "status_bg": 254, "status_fg": 238, "code_bg": 255, "pygments": "default"},
+    {"name": "gruvbox-dark", "fg": 223, "muted": 248, "border": 108, "accent": 214, "title": 179, "status_bg": 237, "status_fg": 223, "code_bg": 235, "pygments": "native"},
+    {"name": "gruvbox-light", "fg": 238, "muted": 244, "border": 100, "accent": 166, "title": 94, "status_bg": 229, "status_fg": 238, "code_bg": 230, "pygments": "default"},
+    {"name": "InspiredGitHub", "fg": 238, "muted": 244, "border": 68, "accent": 31, "title": 25, "status_bg": 254, "status_fg": 238, "code_bg": 255, "pygments": "default"},
+    {"name": "1337", "fg": 46, "muted": 34, "border": 40, "accent": 82, "title": 118, "status_bg": 22, "status_fg": 46, "code_bg": 16, "pygments": "native"},
+    {"name": "Monokai Extended", "fg": 252, "muted": 245, "border": 141, "accent": 148, "title": 81, "status_bg": 236, "status_fg": 251, "code_bg": 235, "pygments": "monokai"},
+    {"name": "Monokai Extended Bright", "fg": 255, "muted": 248, "border": 141, "accent": 184, "title": 117, "status_bg": 237, "status_fg": 255, "code_bg": 236, "pygments": "monokai"},
+    {"name": "Monokai Extended Light", "fg": 238, "muted": 245, "border": 97, "accent": 166, "title": 25, "status_bg": 254, "status_fg": 238, "code_bg": 255, "pygments": "default"},
+    {"name": "Monokai Extended Origin", "fg": 252, "muted": 245, "border": 141, "accent": 197, "title": 81, "status_bg": 236, "status_fg": 251, "code_bg": 235, "pygments": "monokai"},
+    {"name": "Nord", "fg": 253, "muted": 109, "border": 67, "accent": 110, "title": 153, "status_bg": 60, "status_fg": 253, "code_bg": 236, "pygments": "nord"},
+    {"name": "OneHalfDark", "fg": 252, "muted": 247, "border": 75, "accent": 73, "title": 111, "status_bg": 236, "status_fg": 251, "code_bg": 235, "pygments": "native"},
+    {"name": "OneHalfLight", "fg": 238, "muted": 244, "border": 67, "accent": 31, "title": 25, "status_bg": 254, "status_fg": 238, "code_bg": 255, "pygments": "default"},
+    {"name": "Solarized (dark)", "fg": 244, "muted": 240, "border": 37, "accent": 136, "title": 67, "status_bg": 235, "status_fg": 244, "code_bg": 234, "pygments": "solarized-dark"},
+    {"name": "Solarized (light)", "fg": 240, "muted": 244, "border": 37, "accent": 136, "title": 25, "status_bg": 230, "status_fg": 240, "code_bg": 254, "pygments": "default"},
+]
+THEME_INDEX = {theme["name"].lower(): i for i, theme in enumerate(THEMES)}
 
 try:
     from pygments import highlight
@@ -156,11 +190,15 @@ def lexer_for(lang: str, code: str):
         return TextLexer()
 
 
-def colorize_code(code: str, lang: str) -> list[str]:
+def colorize_code(code: str, lang: str, theme: dict) -> list[str]:
     if not HAS_PYGMENTS:
         return code.splitlines() or [""]
     lexer = lexer_for(lang, code)
-    formatter = Terminal256Formatter(style="monokai")
+    style = theme.get("pygments", "monokai")
+    try:
+        formatter = Terminal256Formatter(style=style)
+    except Exception:
+        formatter = Terminal256Formatter(style="monokai")
     colored = highlight(code, lexer, formatter).rstrip("\n")
     return colored.splitlines() or [""]
 
@@ -195,19 +233,25 @@ def wrap_colored_line(line: str, width: int) -> list[str]:
     return rows
 
 
-def build_rows(text: str, width: int) -> list[str]:
+def build_rows(text: str, width: int, theme: dict) -> list[str]:
     rows = []
     lines = text.splitlines() or [""]
     in_code = False
     code_lang = ""
     code_buf = []
+    fg_color = fg(theme["fg"])
+    border = fg(theme["border"])
+    muted = fg(theme["muted"])
+    accent = fg(theme["accent"])
+    title_color = "\x1b[1m" + fg(theme["title"])
+    code_bg = bg(theme["code_bg"])
 
     def flush_code():
         nonlocal code_buf, code_lang
         code = "\n".join(code_buf)
-        for colored_line in colorize_code(code, code_lang):
+        for colored_line in colorize_code(code, code_lang, theme):
             for part in wrap_colored_line(colored_line, width):
-                rows.append(CODE_BG + part + RESET)
+                rows.append(code_bg + part + RESET)
         code_buf = []
         code_lang = ""
 
@@ -217,11 +261,11 @@ def build_rows(text: str, width: int) -> list[str]:
             if in_code:
                 flush_code()
                 in_code = False
-                rows.append(BLUE + fit(stripped, width) + RESET)
+                rows.append(border + fit(stripped, width) + RESET)
             else:
                 in_code = True
                 code_lang = stripped[3:].strip()
-                rows.append(BLUE + fit(stripped, width) + RESET)
+                rows.append(border + fit(stripped, width) + RESET)
             continue
 
         if in_code:
@@ -231,15 +275,15 @@ def build_rows(text: str, width: int) -> list[str]:
         # Markdown / Codex 风格基础着色
         lstrip = line.lstrip()
         prefix = ""
-        suffix = RESET + FG
+        suffix = RESET + fg_color
         if lstrip.startswith("#"):
-            prefix = TITLE
+            prefix = title_color
         elif lstrip.startswith((">", "│")):
-            prefix = MUTED
+            prefix = muted
         elif lstrip.startswith(("- ", "* ", "+ ")):
-            prefix = CYAN
+            prefix = accent
         elif re.match(r"^\s*\d+[.)]\s+", line):
-            prefix = CYAN
+            prefix = accent
         for part in wrap_line(line, width):
             rows.append(prefix + part + suffix if prefix else part)
 
@@ -297,7 +341,7 @@ def get_key() -> str:
     return ch.lower()
 
 
-def draw(path: str, rows: list[str], scroll: int):
+def draw(path: str, rows: list[str], scroll: int, theme: dict):
     cols, lines = shutil.get_terminal_size((100, 30))
     cols = max(cols, 50)
     lines = max(lines, 12)
@@ -307,23 +351,27 @@ def draw(path: str, rows: list[str], scroll: int):
     max_scroll = max(0, total - body_h)
     pct = 100 if max_scroll == 0 else int(scroll * 100 / max_scroll)
     name = os.path.basename(path)
+    fg_color = fg(theme["fg"])
+    page_bg = bg(theme["code_bg"])
+    border = fg(theme["border"])
+    status = bg(theme["status_bg"]) + fg(theme["status_fg"])
 
     esc("\x1b[H")
-    title = f" txtview: {name} "
+    title = f" txtview: {name} [{theme['name']}] "
     top = "┌" + title
-    esc(BLUE + top + "─" * max(0, cols - visual_width(top) - 1) + "┐" + RESET + "\r\n")
+    esc(border + top + "─" * max(0, cols - visual_width(top) - 1) + "┐" + RESET + "\r\n")
 
     for i in range(body_h):
         idx = scroll + i
         raw = rows[idx] if idx < total else ""
         clean_width = visual_width(strip_ansi(raw))
-        esc(BLUE + "│" + RESET + FG)
+        esc(border + "│" + RESET + page_bg + fg_color)
         esc(raw)
-        esc(" " * max(0, inner - clean_width))
-        esc(BLUE + "│" + RESET + "\r\n")
+        esc(page_bg + fg_color + " " * max(0, inner - clean_width))
+        esc(border + "│" + RESET + "\r\n")
 
-    status = f" ↑↓/PgUp/PgDn 滚动 | Home/End | q/Esc 退出 | {scroll + 1}/{max(total,1)} | {pct}% "
-    esc(BLUE + "└" + RESET + STATUS + fit(status, inner) + RESET + BLUE + "┘" + RESET)
+    status_text = f" ↑↓/PgUp/PgDn 滚动 | Home/End | t 切换主题 | q/Esc 退出 | {scroll + 1}/{max(total,1)} | {pct}% "
+    esc(border + "└" + RESET + status + fit(status_text, inner) + RESET + border + "┘" + RESET)
     flush()
 
 
@@ -342,8 +390,57 @@ def strip_ansi(s: str) -> str:
     return "".join(out)
 
 
+def theme_names() -> str:
+    return "\n".join(theme["name"] for theme in THEMES)
+
+
+def find_theme(name: str | None) -> tuple[int, dict]:
+    if not name:
+        return 0, THEMES[0]
+    key = name.strip().lower()
+    if key in THEME_INDEX:
+        idx = THEME_INDEX[key]
+        return idx, THEMES[idx]
+    matches = [i for i, theme in enumerate(THEMES) if theme["name"].lower().startswith(key)]
+    if len(matches) == 1:
+        idx = matches[0]
+        return idx, THEMES[idx]
+    return 0, THEMES[0]
+
+
+def parse_args(argv: list[str]) -> tuple[str | None, int, bool]:
+    path = None
+    theme_name = os.environ.get("TXTVIEW_THEME")
+    list_themes = False
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+        if arg in ("--list-themes", "--themes"):
+            list_themes = True
+        elif arg in ("--theme", "-t"):
+            i += 1
+            if i < len(argv):
+                theme_name = argv[i]
+        elif arg.startswith("--theme="):
+            theme_name = arg.split("=", 1)[1]
+        elif arg in ("-h", "--help"):
+            print("Usage: python txtview.py [--theme NAME] [--list-themes] [file]")
+            print()
+            print("Themes:")
+            print(theme_names())
+            raise SystemExit(0)
+        elif path is None:
+            path = arg
+        i += 1
+    theme_idx, _ = find_theme(theme_name)
+    return path, theme_idx, list_themes
+
+
 def main():
-    path = sys.argv[1] if len(sys.argv) > 1 else None
+    path, theme_idx, list_themes = parse_args(sys.argv)
+    if list_themes:
+        print(theme_names())
+        return
     if not path:
         path = pick_file()
     if not path:
@@ -353,22 +450,27 @@ def main():
 
     with Terminal():
         last_width = -1
+        last_theme_idx = -1
         rows = []
         scroll = 0
         while True:
+            theme = THEMES[theme_idx]
             cols, lines = shutil.get_terminal_size((100, 30))
             inner = max(20, cols - 2)
             body_h = max(5, lines - 3)
-            if inner != last_width:
-                rows = build_rows(text, inner)
+            if inner != last_width or theme_idx != last_theme_idx:
+                rows = build_rows(text, inner, theme)
                 last_width = inner
+                last_theme_idx = theme_idx
             max_scroll = max(0, len(rows) - body_h)
             scroll = max(0, min(scroll, max_scroll))
-            draw(path, rows, scroll)
+            draw(path, rows, scroll, theme)
 
             key = get_key()
             if key in ("q", "esc"):
                 break
+            elif key == "t":
+                theme_idx = (theme_idx + 1) % len(THEMES)
             elif key == "up":
                 scroll -= 1
             elif key == "down":
