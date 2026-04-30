@@ -91,15 +91,33 @@ def flush():
     sys.stdout.flush()
 
 
-def read_text(path: str) -> str:
+def read_text_with_encoding(path: str) -> tuple[str, str]:
     for enc in ("utf-8-sig", "utf-8", "gb18030", "gbk", "big5"):
         try:
             with open(path, "r", encoding=enc) as f:
-                return f.read()
+                return f.read(), enc
         except UnicodeDecodeError:
             pass
     with open(path, "r", encoding="utf-8", errors="replace") as f:
-        return f.read()
+        return f.read(), "utf-8"
+
+
+def read_text(path: str) -> str:
+    text, _ = read_text_with_encoding(path)
+    return text
+
+
+def write_text(path: str, text: str, encoding: str):
+    with open(path, "w", encoding=encoding, newline="") as f:
+        f.write(text)
+
+
+def split_edit_lines(text: str) -> list[str]:
+    return text.split("\n") if text else [""]
+
+
+def join_edit_lines(lines_buf: list[str]) -> str:
+    return "\n".join(lines_buf)
 
 
 def pick_file() -> str | None:
@@ -318,30 +336,49 @@ def get_key() -> str:
             return {
                 "H": "up",
                 "P": "down",
+                "K": "left",
+                "M": "right",
                 "I": "pgup",
                 "Q": "pgdn",
                 "G": "home",
                 "O": "end",
+                "S": "delete",
             }.get(ch2, "")
         if ch == "\x1b":
             return "esc"
-        return ch.lower()
+        if ch in ("\r", "\n"):
+            return "enter"
+        if ch == "\x08":
+            return "backspace"
+        if ch == "\x13":
+            return "ctrl+s"
+        return ch
     ch = sys.stdin.read(1)
     if ch == "\x1b":
         seq = sys.stdin.read(2)
         if seq == "[A": return "up"
         if seq == "[B": return "down"
+        if seq == "[C": return "right"
+        if seq == "[D": return "left"
         if seq == "[H": return "home"
         if seq == "[F": return "end"
+        if seq == "[3":
+            sys.stdin.read(1); return "delete"
         if seq == "[5":
             sys.stdin.read(1); return "pgup"
         if seq == "[6":
             sys.stdin.read(1); return "pgdn"
         return "esc"
-    return ch.lower()
+    if ch in ("\r", "\n"):
+        return "enter"
+    if ch in ("\x7f", "\b"):
+        return "backspace"
+    if ch == "\x13":
+        return "ctrl+s"
+    return ch
 
 
-def draw(path: str, rows: list[str], scroll: int, theme: dict):
+def draw(path: str, rows: list[str], scroll: int, theme: dict, edit_mode: bool = False, dirty: bool = False, message: str = ""):
     cols, lines = shutil.get_terminal_size((100, 30))
     cols = max(cols, 50)
     lines = max(lines, 12)
@@ -357,7 +394,13 @@ def draw(path: str, rows: list[str], scroll: int, theme: dict):
     status = bg(theme["status_bg"]) + fg(theme["status_fg"])
 
     esc("\x1b[H")
-    title = f" txtview: {name} [{theme['name']}] "
+    flags = []
+    if edit_mode:
+        flags.append("EDIT")
+    if dirty:
+        flags.append("*")
+    flag_text = f" {' '.join(flags)}" if flags else ""
+    title = f" txtview: {name} [{theme['name']}]{flag_text} "
     top = "┌" + title
     esc(border + top + "─" * max(0, cols - visual_width(top) - 1) + "┐" + RESET + "\r\n")
 
@@ -370,8 +413,46 @@ def draw(path: str, rows: list[str], scroll: int, theme: dict):
         esc(page_bg + fg_color + " " * max(0, inner - clean_width))
         esc(border + "│" + RESET + "\r\n")
 
-    status_text = f" ↑↓/PgUp/PgDn 滚动 | Home/End | t 切换主题 | q/Esc 退出 | {scroll + 1}/{max(total,1)} | {pct}% "
+    if edit_mode:
+        status_text = f" 编辑: 输入文字 | Enter 换行 | Backspace/Delete 删除 | Ctrl+S 保存 | Esc 退出编辑 | {message} "
+    else:
+        status_text = f" ↑↓/PgUp/PgDn 滚动 | Home/End | e 编辑 | t 切换主题 | q/Esc 退出 | {scroll + 1}/{max(total,1)} | {pct}% {message} "
     esc(border + "└" + RESET + status + fit(status_text, inner) + RESET + border + "┘" + RESET)
+    flush()
+
+
+def draw_editor(path: str, lines_buf: list[str], cursor_line: int, cursor_col: int, scroll: int, theme: dict, dirty: bool, message: str):
+    cols, lines = shutil.get_terminal_size((100, 30))
+    cols = max(cols, 50)
+    lines = max(lines, 12)
+    inner = cols - 2
+    body_h = lines - 3
+    name = os.path.basename(path)
+    fg_color = fg(theme["fg"])
+    page_bg = bg(theme["code_bg"])
+    border = fg(theme["border"])
+    status = bg(theme["status_bg"]) + fg(theme["status_fg"])
+
+    esc("\x1b[?25l\x1b[H")
+    flag_text = " EDIT * " if dirty else " EDIT "
+    title = f" txtview: {name} [{theme['name']}]{flag_text}"
+    top = "┌" + title
+    esc(border + top + "─" * max(0, cols - visual_width(top) - 1) + "┐" + RESET + "\r\n")
+
+    for i in range(body_h):
+        idx = scroll + i
+        raw = lines_buf[idx].replace("\t", "    ") if idx < len(lines_buf) else ""
+        shown = fit(raw, inner)
+        esc(border + "│" + RESET + page_bg + fg_color + shown + RESET + border + "│" + RESET + "\r\n")
+
+    status_text = f" 编辑: 输入文字 | Enter 换行 | Backspace/Delete 删除 | Ctrl+S 保存 | Esc 退出编辑 | {cursor_line + 1}:{cursor_col + 1} {message} "
+    esc(border + "└" + RESET + status + fit(status_text, inner) + RESET + border + "┘" + RESET)
+
+    cursor_y = cursor_line - scroll + 2
+    cursor_x = visual_width(lines_buf[cursor_line][:cursor_col].replace("\t", "    ")) + 2
+    if 2 <= cursor_y < lines:
+        cursor_x = max(2, min(cursor_x, cols - 1))
+        esc(f"\x1b[{cursor_y};{cursor_x}H\x1b[?25h")
     flush()
 
 
@@ -446,43 +527,167 @@ def main():
     if not path:
         return
 
-    text = read_text(path)
+    text, encoding = read_text_with_encoding(path)
+    edit_lines = split_edit_lines(text)
 
     with Terminal():
         last_width = -1
         last_theme_idx = -1
         rows = []
         scroll = 0
+        edit_mode = False
+        dirty = False
+        cursor_line = 0
+        cursor_col = 0
+        message = ""
+        confirm_quit = False
         while True:
             theme = THEMES[theme_idx]
             cols, lines = shutil.get_terminal_size((100, 30))
             inner = max(20, cols - 2)
             body_h = max(5, lines - 3)
-            if inner != last_width or theme_idx != last_theme_idx:
-                rows = build_rows(text, inner, theme)
-                last_width = inner
-                last_theme_idx = theme_idx
-            max_scroll = max(0, len(rows) - body_h)
-            scroll = max(0, min(scroll, max_scroll))
-            draw(path, rows, scroll, theme)
+            if edit_mode:
+                cursor_line = max(0, min(cursor_line, len(edit_lines) - 1))
+                cursor_col = max(0, min(cursor_col, len(edit_lines[cursor_line])))
+                if cursor_line < scroll:
+                    scroll = cursor_line
+                elif cursor_line >= scroll + body_h:
+                    scroll = cursor_line - body_h + 1
+                max_scroll = max(0, len(edit_lines) - body_h)
+                scroll = max(0, min(scroll, max_scroll))
+                draw_editor(path, edit_lines, cursor_line, cursor_col, scroll, theme, dirty, message)
+            else:
+                if inner != last_width or theme_idx != last_theme_idx:
+                    rows = build_rows(text, inner, theme)
+                    last_width = inner
+                    last_theme_idx = theme_idx
+                max_scroll = max(0, len(rows) - body_h)
+                scroll = max(0, min(scroll, max_scroll))
+                draw(path, rows, scroll, theme, edit_mode, dirty, message)
 
             key = get_key()
-            if key in ("q", "esc"):
+            message = ""
+
+            if edit_mode:
+                confirm_quit = False
+                if key == "ctrl+s":
+                    text = join_edit_lines(edit_lines)
+                    write_text(path, text, encoding)
+                    dirty = False
+                    rows = []
+                    last_width = -1
+                    message = "已保存"
+                elif key == "esc":
+                    edit_mode = False
+                    text = join_edit_lines(edit_lines)
+                    rows = []
+                    last_width = -1
+                    message = "已退出编辑" if dirty else ""
+                elif key == "up":
+                    cursor_line -= 1
+                    if cursor_line >= 0:
+                        cursor_col = min(cursor_col, len(edit_lines[cursor_line]))
+                elif key == "down":
+                    cursor_line += 1
+                    if cursor_line < len(edit_lines):
+                        cursor_col = min(cursor_col, len(edit_lines[cursor_line]))
+                elif key == "left":
+                    if cursor_col > 0:
+                        cursor_col -= 1
+                    elif cursor_line > 0:
+                        cursor_line -= 1
+                        cursor_col = len(edit_lines[cursor_line])
+                elif key == "right":
+                    if cursor_col < len(edit_lines[cursor_line]):
+                        cursor_col += 1
+                    elif cursor_line < len(edit_lines) - 1:
+                        cursor_line += 1
+                        cursor_col = 0
+                elif key == "home":
+                    cursor_col = 0
+                elif key == "end":
+                    cursor_col = len(edit_lines[cursor_line])
+                elif key == "pgup":
+                    cursor_line = max(0, cursor_line - body_h)
+                    cursor_col = min(cursor_col, len(edit_lines[cursor_line]))
+                elif key == "pgdn":
+                    cursor_line = min(len(edit_lines) - 1, cursor_line + body_h)
+                    cursor_col = min(cursor_col, len(edit_lines[cursor_line]))
+                elif key == "enter":
+                    line = edit_lines[cursor_line]
+                    edit_lines[cursor_line] = line[:cursor_col]
+                    edit_lines.insert(cursor_line + 1, line[cursor_col:])
+                    cursor_line += 1
+                    cursor_col = 0
+                    dirty = True
+                elif key == "backspace":
+                    if cursor_col > 0:
+                        line = edit_lines[cursor_line]
+                        edit_lines[cursor_line] = line[:cursor_col - 1] + line[cursor_col:]
+                        cursor_col -= 1
+                        dirty = True
+                    elif cursor_line > 0:
+                        prev_len = len(edit_lines[cursor_line - 1])
+                        edit_lines[cursor_line - 1] += edit_lines.pop(cursor_line)
+                        cursor_line -= 1
+                        cursor_col = prev_len
+                        dirty = True
+                elif key == "delete":
+                    line = edit_lines[cursor_line]
+                    if cursor_col < len(line):
+                        edit_lines[cursor_line] = line[:cursor_col] + line[cursor_col + 1:]
+                        dirty = True
+                    elif cursor_line < len(edit_lines) - 1:
+                        edit_lines[cursor_line] += edit_lines.pop(cursor_line + 1)
+                        dirty = True
+                elif len(key) == 1 and ord(key) >= 32:
+                    line = edit_lines[cursor_line]
+                    edit_lines[cursor_line] = line[:cursor_col] + key + line[cursor_col:]
+                    cursor_col += 1
+                    dirty = True
+                continue
+
+            if key == "ctrl+s" and dirty:
+                text = join_edit_lines(edit_lines)
+                write_text(path, text, encoding)
+                dirty = False
+                rows = []
+                last_width = -1
+                message = "已保存"
+                confirm_quit = False
+            elif key in ("q", "Q", "esc"):
+                if dirty and not confirm_quit:
+                    message = "有未保存修改，再按 q/Esc 放弃退出，或按 e 后 Ctrl+S 保存"
+                    confirm_quit = True
+                    continue
                 break
-            elif key == "t":
+            elif key in ("e", "E"):
+                edit_mode = True
+                edit_lines = split_edit_lines(text)
+                cursor_line = min(scroll, len(edit_lines) - 1)
+                cursor_col = 0
+                confirm_quit = False
+            elif key in ("t", "T"):
                 theme_idx = (theme_idx + 1) % len(THEMES)
+                confirm_quit = False
             elif key == "up":
                 scroll -= 1
+                confirm_quit = False
             elif key == "down":
                 scroll += 1
+                confirm_quit = False
             elif key == "pgup":
                 scroll -= body_h
+                confirm_quit = False
             elif key == "pgdn":
                 scroll += body_h
+                confirm_quit = False
             elif key == "home":
                 scroll = 0
+                confirm_quit = False
             elif key == "end":
                 scroll = max_scroll
+                confirm_quit = False
 
 
 if __name__ == "__main__":
