@@ -416,7 +416,7 @@ def draw(path: str, rows: list[str], scroll: int, theme: dict, edit_mode: bool =
     if edit_mode:
         status_text = f" 编辑: 输入文字 | Enter 换行 | Backspace/Delete 删除 | Ctrl+S 保存 | Esc 退出编辑 | {message} "
     else:
-        status_text = f" ↑↓/PgUp/PgDn 滚动 | Home/End | e 编辑 | t 切换主题 | q/Esc 退出 | {scroll + 1}/{max(total,1)} | {pct}% {message} "
+        status_text = f" ↑↓/PgUp/PgDn 滚动 | Home/End | e 编辑 | t/] 下个主题 | T/[ 上个主题 | q/Esc 退出 | {scroll + 1}/{max(total,1)} | {pct}% {message} "
     esc(border + "└" + RESET + status + fit(status_text, inner) + RESET + border + "┘" + RESET)
     flush()
 
@@ -667,8 +667,11 @@ def main():
                 cursor_line = min(scroll, len(edit_lines) - 1)
                 cursor_col = 0
                 confirm_quit = False
-            elif key in ("t", "T"):
+            elif key in ("t", "]"):
                 theme_idx = (theme_idx + 1) % len(THEMES)
+                confirm_quit = False
+            elif key in ("T", "["):
+                theme_idx = (theme_idx - 1) % len(THEMES)
                 confirm_quit = False
             elif key == "up":
                 scroll -= 1

@@ -68,7 +68,8 @@ python txtview.py sample_code.txt
 | `PageUp` / `PageDown` | 翻页 |
 | `Home` / `End` | 跳到开头/结尾 |
 | `e` | 进入编辑模式 |
-| `t` | 切换主题 |
+| `t` / `]` | 切到下一个主题 |
+| `T` / `[` | 切到上一个主题 |
 | `q` / `Esc` | 退出 |
 
 编辑模式下：
